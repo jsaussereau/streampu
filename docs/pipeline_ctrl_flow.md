@@ -44,7 +44,7 @@ Node Last_Subseq(Node n):
         E(SS Branch 3)-.->F(SS select);
         F(SS select)-->G(SS 2);
     ```  
-    Here are the paths the DFS would take are
+    Here are the paths the DFS would take:
 
     - [`SS 1`, `SS commute`, `SS Branch 1`, `SS select`, `SS 2`] : returns `SS 2`
     - [`SS 1`, `SS commute`, `SS Branch 2`] : returns `SS Branch 2`
@@ -63,7 +63,7 @@ Node Last_Subseq(Node n):
     E(SS 3)-.->B(SS select);
     F(SS commute)-.->G(SS 4);
     ```  
-    Here are the paths the DFS would take are
+    Here are the paths the DFS would take:
 
     - [`SS 1`, `SS select`, `SS 2`, `SS commute`, `SS 3`] : returns `SS 3`
     - [`SS 1`, `SS select`, `SS 2`, `SS commute`, `SS 4`] : returns `SS 4`
@@ -73,7 +73,7 @@ Node Last_Subseq(Node n):
     because of the order in which the children of node `SS commute` were parsed.
     If `SS 4` had been parsed first, then it would have returned `SS 3`. This kind of
     behavior is problematic as the algorithm should not depend on which
-    children is first in a list, as that is not relevant to the layout of the
+    child is first in a list, as that is not relevant to the layout of the
     graph.
 
 === "No switcher"
@@ -107,7 +107,9 @@ Node Last_Subseq(Node n):
 This is simple and efficient.
 
 !!! info
-    This is the current implementation in `StreamPU`.
+    This is the current implementation in `StreamPU`
+    (`Sequence::get_last_subsequence()`). In addition, an exception is raised
+    if two branches return different childless nodes (this should not happen).
 
 ### Finding Invalid Switchers
 
@@ -119,7 +121,7 @@ if a `commute` or `select` task is orphan (and thus, *invalid*).
 
 #### Depth-first Search for Invalid Switchers
 
-The following sub-sequences denotes an invalid binding.
+The following sub-sequences denote an invalid binding.
 
 ```mermaid
     graph LR;

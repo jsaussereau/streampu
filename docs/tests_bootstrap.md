@@ -1,6 +1,6 @@
 # Bootstrap
 
-`StreamPU` comes with simple tests to validate its behavior. The later are
+`StreamPU` comes with simple tests to validate its behavior. The latter are
 always a good way to bootstrap when you want to write your first code with the
 DSEL. The source codes of the following tests are located in the 
 `tests/bootstrap` folder. Each file corresponds to an executable test.
@@ -26,12 +26,12 @@ the `Initializer` ($t_1$) "$+6$".
 
     **Command Line Arguments**
 
-    The following verbatim is a copy-paste from the `-h` stdout:
+    The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
     ```bash
     usage: ./bin/test-simple-chain [options]
 
-      -t, --n-threads       Number of threads to run in parallel                                  [10]
+      -t, --n-threads       Number of threads to run in parallel                                  [16]
       -f, --n-inter-frames  Number of frames to process in one task                               [1]
       -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
       -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -41,8 +41,9 @@ the `Initializer` ($t_1$) "$+6$".
       -b, --step-by-step    Enable step-by-step sequence execution (performance will be reduced)  [false]
       -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
       -g, --debug           Enable task debug mode (print socket data)                            [false]
-      -u, --subseq          Enable subsequence in the executed sequence                           [false]
+      -u, --set             Enable set in the executed sequence                                   [false]
       -v, --verbose         Enable verbose mode                                                   [false]
+      -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
       -h, --help            This help                                                             [false]
     ```
 
@@ -59,23 +60,23 @@ the `Initializer` ($t_1$) "$+6$".
 
     **Command Line Arguments**
 
-    The following verbatim is a copy-paste from the `-h` stdout:
+    The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
     ```bash
     usage: ./bin/test-simple-chain-fwd [options]
 
-      -t, --n-threads       Number of threads to run in parallel                                  [10]
+      -t, --n-threads       Number of threads to run in parallel                                  [16]
       -f, --n-inter-frames  Number of frames to process in one task                               [1]
       -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
       -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
       -e, --n-exec          Number of sequence executions                                         [100000]
       -o, --dot-filepath    Path to dot output file                                               [empty]
-      -c, --copy-mode       Enable to copy data in sequence (performance will be reduced)         [true]
+      -c, --copy-mode       Enable to copy data in sequence (performance will be reduced)         [false]
       -b, --step-by-step    Enable step-by-step sequence execution (performance will be reduced)  [false]
       -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
       -g, --debug           Enable task debug mode (print socket data)                            [false]
-      -u, --subseq          Enable subsequence in the executed sequence                           [false]
       -v, --verbose         Enable verbose mode                                                   [false]
+      -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
       -h, --help            This help                                                             [false]
     ```
 
@@ -92,12 +93,12 @@ the `Initializer` ($t_1$) "$+6$".
 
     **Command Line Arguments**
 
-    The following verbatim is a copy-paste from the `-h` stdout:
+    The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
     ```bash
     usage: ./bin/test-simple-chain-hybrid [options]
 
-      -t, --n-threads       Number of threads to run in parallel                                  [10]
+      -t, --n-threads       Number of threads to run in parallel                                  [16]
       -f, --n-inter-frames  Number of frames to process in one task                               [1]
       -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
       -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -108,6 +109,7 @@ the `Initializer` ($t_1$) "$+6$".
       -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
       -g, --debug           Enable task debug mode (print socket data)                            [false]
       -v, --verbose         Enable verbose mode                                                   [false]
+      -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
       -h, --help            This help                                                             [false]
     ```
 
@@ -147,12 +149,12 @@ examples).
 
     **Command Line Arguments**
 
-    The following verbatim is a copy-paste from the `-h` stdout:
+    The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
     ```bash
     usage: ./bin/test-for-loop [options]
 
-      -t, --n-threads       Number of threads to run in parallel                                  [10]
+      -t, --n-threads       Number of threads to run in parallel                                  [16]
       -f, --n-inter-frames  Number of frames to process in one task                               [1]
       -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
       -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -163,6 +165,7 @@ examples).
       -b, --step-by-step    Enable step-by-step sequence execution (performance will be reduced)  [false]
       -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
       -g, --debug           Enable task debug mode (print socket data)                            [false]
+      -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
       -h, --help            This help                                                             [false]
     ```
 
@@ -181,12 +184,12 @@ examples).
 
     **Command Line Arguments**
 
-    The following verbatim is a copy-paste from the `-h` stdout:
+    The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
     ```bash
     usage: ./bin/test-do-while-loop [options]
 
-      -t, --n-threads       Number of threads to run in parallel                                  [10]
+      -t, --n-threads       Number of threads to run in parallel                                  [16]
       -f, --n-inter-frames  Number of frames to process in one task                               [1]
       -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
       -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -197,6 +200,7 @@ examples).
       -b, --step-by-step    Enable step-by-step sequence execution (performance will be reduced)  [false]
       -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
       -g, --debug           Enable task debug mode (print socket data)                            [false]
+      -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
       -h, --help            This help                                                             [false]
     ```
 
@@ -207,7 +211,7 @@ examples).
     </figure>
 
     ```bash
-    ./bin/test-do-while-loop -t 1 -i 5 -j 2
+    ./bin/test-nested-loops -t 1 -i 5 -j 2
     ```
 
     Implementation of 2 nested `for-loop`s. `-j 2` controls the number of times
@@ -215,12 +219,12 @@ examples).
 
     **Command Line Arguments**
 
-    The following verbatim is a copy-paste from the `-h` stdout:
+    The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
     ```bash
     usage: ./bin/test-nested-loops [options]
 
-      -t, --n-threads       Number of threads to run in parallel                                  [10]
+      -t, --n-threads       Number of threads to run in parallel                                  [16]
       -f, --n-inter-frames  Number of frames to process in one task                               [1]
       -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
       -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -232,6 +236,7 @@ examples).
       -b, --step-by-step    Enable step-by-step sequence execution (performance will be reduced)  [false]
       -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
       -g, --debug           Enable task debug mode (print socket data)                            [false]
+      -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
       -h, --help            This help                                                             [false]
     ```
 
@@ -274,12 +279,12 @@ option (with `N` the path id).
 
 **Command Line Arguments**
 
-The following verbatim is a copy-paste from the `-h` stdout:
+The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
 ```bash
 usage: ./bin/test-exclusive-paths [options]
 
-  -t, --n-threads       Number of threads to run in parallel                                  [10]
+  -t, --n-threads       Number of threads to run in parallel                                  [16]
   -f, --n-inter-frames  Number of frames to process in one task                               [1]
   -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
   -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -291,6 +296,7 @@ usage: ./bin/test-exclusive-paths [options]
   -p, --print-stats     Enable to print per task statistics (performance will be reduced)     [false]
   -g, --debug           Enable task debug mode (print socket data)                            [false]
   -y, --cyclic-path     Enable cyclic selection of the path (with this `--path` is ignored)   [false]
+  -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
   -h, --help            This help                                                             [false]
 ```
 
@@ -329,12 +335,12 @@ file and the output file are the same.
 
 **Command Line Arguments**
 
-The following verbatim is a copy-paste from the `-h` stdout:
+The following verbatim is a copy-paste from the `-h` stdout (the default number of threads is the number of hardware threads of the machine, 16 here):
 
 ```bash
 usage: ./bin/test-simple-pipeline [options]
 
-  -t, --n-threads       Number of threads to run in parallel                                  [10]
+  -t, --n-threads       Number of threads to run in parallel                                  [16]
   -f, --n-inter-frames  Number of frames to process in one task                               [1]
   -s, --sleep-time      Sleep time duration in one task (microseconds)                        [5]
   -d, --data-length     Size of data to process in one task (in bytes)                        [2048]
@@ -348,6 +354,59 @@ usage: ./bin/test-simple-pipeline [options]
   -g, --debug           Enable task debug mode (print socket data)                            [false]
   -q, --force-sequence  Force sequence instead of pipeline                                    [false]
   -w, --active-waiting  Enable active waiting in the pipeline synchronizations                [false]
+  -k, --task-autoalloc Enable task SOUT autoalloc mode                                      [false]
   -h, --help            This help                                                             [false]
 ```
 
+
+----
+
+## Common Command Line Arguments
+
+Most of the tests share the following parameters:
+
+- `-t`: the number of threads (replicas of the sequence, or of the replicated
+  stage of a pipeline);
+- `-f`: the number of frames per execution (see
+  [Frames and Waves](concepts_overview.md#frames-and-waves));
+- `-s`: the duration of the tasks (active waiting, in microseconds);
+- `-d`: the size of the data;
+- `-e`: the number of executions;
+- `-o`: exports the graph in a DOT file (see
+  [Debugging & Profiling](debugging.md#exporting-the-graph));
+- `-c`: disables the [no-copy mode](sequence_usage.md#no-copy-mode);
+- `-b`: executes the sequence step by step with `exec_step()`;
+- `-p`: enables and displays the [statistics](debugging.md#statistics) of the
+  tasks;
+- `-g`: enables the [debug mode](debugging.md#debug-mode) of the tasks;
+- `-k`: enables the *task autoalloc* mode
+  (`tools::Buffer_allocator::set_task_autoalloc(true)`, see
+  [Memory Management](concepts_overview.md#memory-management));
+- `-q`: executes the chain in a sequence instead of a pipeline;
+- `-w`: active waiting in the pipeline synchronizations;
+- `-u`: in the pipeline tests, the size of the synchronization buffers. In
+  `test-simple-chain`, `-u` (`--set`) encapsulates the incrementers in a
+  [`Set`](modules_catalog.md#set) module.
+
+## Other Tests
+
+The other tests are located in the `tests/advanced`, `tests/ctrl_flow`,
+`tests/builder` and `tests/julia` folders:
+
+| Executable | Source | Description |
+| ---------- | ------ | ----------- |
+| `test-nested-do-while-loops` | `tests/bootstrap/nested_do_while_loops.cpp` | Two nested `do-while` loops (same parameters as `test-nested-loops`). |
+| `test-pipeline-double-chain` | `tests/advanced/pipeline_double_chain.cpp` | See [Forward Socket](socket_fwd.md#tests). |
+| `test-complex-pipeline-full-fwd` | `tests/advanced/complex_pipeline_full_fwd.cpp` | See [Forward Socket](socket_fwd.md#tests). |
+| `test-complex-pipeline-mix-fwd` | `tests/advanced/complex_pipeline_mix_fwd.cpp` | See [Forward Socket](socket_fwd.md#tests). |
+| `test-complex-pipeline-inter-stage` | `tests/advanced/complex_pipeline_inter_stage.cpp` | See [Forward Socket](socket_fwd.md#tests). |
+| `test-pipeline-probe` | `tests/advanced/pipeline_probe.cpp` | Probes in a pipeline, measures written in a file with a `Terminal_dump` (see [Probes & Reporters](probes.md)). |
+| `test-thread-pinning` | `tests/advanced/thread_pinning.cpp` | Checks the [thread pinning](thread_pinning.md) of a pipeline (only compiled with `SPU_LINK_HWLOC=ON`). |
+| `test-exclusive-paths-pipeline` | `tests/ctrl_flow/exclusive_paths_pipeline.cpp` | See [Pipeline & Control Flow](pipeline_ctrl_flow.md#tests). |
+| `test-nested-loops-pipeline` | `tests/ctrl_flow/nested_loops_pipeline.cpp` | See [Pipeline & Control Flow](pipeline_ctrl_flow.md#tests). |
+| `test-pipeline-builder-simple` | `tests/builder/pipeline_builder_simple.cpp` | The simple pipeline built with the [`Pipeline_builder`](pipeline_usage.md#pipeline-builder). |
+| `test-pipeline-builder-conditional` | `tests/builder/pipeline_builder_conditional.cpp` | A pipeline built with the `Pipeline_builder`, with excluded tasks and pinning. |
+| `test-*-julia` | `tests/julia/` | See [Julia Interoperability](julia.md) (only compiled with `SPU_LINK_JULIA=ON`). |
+
+The way the tests are registered in CTest is described in
+[Installation](installation.md#running-the-tests).

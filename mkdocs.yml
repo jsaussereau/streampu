@@ -75,14 +75,26 @@ extra_javascript:
 nav:
   - index.md
   - For Users:
+    - installation.md
     - Concepts:
       - concepts_overview.md
+      - getting_started.md
+    - Programming:
+      - custom_modules.md
+      - sequence_usage.md
+      - pipeline_usage.md
+      - control_flow.md
+      - modules_catalog.md
+    - Runtime:
+      - thread_pinning.md
+      - schedulers.md
+    - Tools:
+      - probes.md
+      - debugging.md
     - Tests:
       - tests_bootstrap.md
     - benchmark.md
     - julia.md
-    - Runtime:
-      - thread_pinning.md
   - For Developers:
       - Basic Components:
         - task.md

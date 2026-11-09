@@ -11,7 +11,7 @@ Basically, there are 3 different types of task that can be instantiated:
   input socket. As a consequence, there is only one first task and it is 
   possible to choose between `read` and `initialize` tasks.
 - **Middle task**: A task that has an input and an output socket. It is up to 
-  the user to decide the number and the combination of middle tasks he wants. It 
+  the user to decide the number and the combination of middle tasks. It 
   is possible to select between `relay`, `relayf`, `increment` and `incrementf` 
   tasks.
 - **Last task**: To be correct, a chain should always end with a task that does 
@@ -65,9 +65,10 @@ There are three main ways of describing a processing chain:
    scheduler considers that the number of resources $R$ is the number of CPU 
    hardware threads but you can override this behavior by using the `-t` (or 
    `--n-threads`) CLI parameter. It is also possible to choose the scheduler 
-   algorithm through the `-S` (or `--sched`) CLI parameter. For now, the 
-   available schedulers are `OTAC` and `FILE` (please see the note below about 
-   the latest).
+   algorithm through the `-S` CLI parameter. The available schedulers are
+   `OTAC`, `GR` and `FILE` (see [Schedulers](schedulers.md) and the note
+   below about the latest). The number of profiling executions is set with
+   `-l`.
 
 The first notation is a compressed way to describe chains of tasks. By default, 
 the chain is split in [pipeline](pipeline.md) stages according to the given 
@@ -83,8 +84,17 @@ thread.
 
 !!! note
     If `StreamPU` has been compiled with the CMake `-DSPU_LINK_HWLOC=ON` option,
-    then it is possible to specify an [pinning policy](thread_pinning.md) with 
-    the `-P` or `--pinning-policy` CLI argument.
+    then it is possible to specify a [pinning policy](thread_pinning.md) with 
+    the `-P` CLI argument (this argument is only listed in the help when
+    `hwloc` is linked). In this case, and with `-C`, the `hwloc` topology is
+    automatically loaded (unless `-P none` is given).
+
+!!! warning
+    For the parameters that take a value (`-n`, `-r`, `-R`, `-C`, `-S`, `-F`
+    and `-P`), use the short form: their long forms (`--tsk-per-sta`,
+    `--tsk-types`, `--tsk-types-sta`, `--chain`, `--sched`, `--sched-file` and
+    `--pinning-policy`) are currently declared without argument in the
+    command line parser.
 
 !!! tip
     For the `initialize`, `increment`, `incrementf`, `relay`, `relayf` and 
@@ -94,49 +104,35 @@ thread.
     parameter will set the same duration for all the previously mentioned tasks.
 
 !!! note
-    The `FILE` scheduler reads the scheduling from a JSON file, to set the path
-    to this file there is the `-F` parameter (or `--sched-file`).
-    The expected JSON file looks like the following:
+    The `FILE` scheduler reads the scheduling from a JSON file given with the
+    `-F` parameter (`sched.json` by default). The file format is described in
+    [Schedulers](schedulers.md#file-format-version-2-default). Here is an
+    example of a valid file for a chain of 18 tasks:
     ```json
     {
-    "platform": "x7ti",
-    "resources": {
-      "p-core": {
-        "node-list": ["core0-5"],
-        "cluster-size": 1,
-        "smt": 2
+      "resources": {
+        "p-core": { "node-list": ["core0-5"], "smt": 2 },
+        "e-core": { "node-list": ["core6-13"], "smt": 1 }
       },
-      "e-core": {
-        "node-list": ["core6-13"],
-        "cluster-size": 4,
-        "smt": 1
-      }
-    },
-    "scheduler_name": "HeRAD",
-    "date": "2025-07-23",
-    "schedule": [
+      "schedule": [
         { "tasks": 5, "threads": 1, "core-type": "p-core", "pinning-policy": "packed",  "sync_buff_size": 1, "sync_waiting_type": "active"  },
         { "tasks": 1, "threads": 1, "core-type": "p-core", "pinning-policy": "packed",  "sync_buff_size": 8, "sync_waiting_type": "passive" },
-        { "tasks": 6, "threads": 1, "core-type": "p-core", "pinning-policy": "packed",                                                      },
-        { "tasks": 4, "threads": 2, "core-type": "p-core", "pinning-policy": "guided",  "sync_buff_size": 1,                                },
-        { "tasks": 3, "threads": 7, "core-type": "e-core", "pinning-policy": "distant",                      "sync_waiting_type": "active"  },
-        { "tasks": 4, "threads": 2, "core-type": "p-core", "pinning-policy": "guided",                                                      }
+        { "tasks": 4, "threads": 2, "core-type": "p-core", "pinning-policy": "guided",  "sync_buff_size": 1 },
+        { "tasks": 4, "threads": 7, "core-type": "e-core", "pinning-policy": "distant", "sync_waiting_type": "active" },
+        { "tasks": 4, "threads": 2, "core-type": "p-core", "pinning-policy": "guided" }
       ]
     }
     ```
-    In the `schedule` field, each line corresponds to one pipeline stage, the 
-    field `tasks` counts the number of consecutive tasks of the current stage 
-    while the field `threads` gives the number of threads to use for the 
-    current stage. Four policies are available while using the `pinning-policy` 
-    field: `loose` (do not pin), `guided` (pin to core type), `packed` (pin 
-    following the ascending order of core ids given by the `resources` field) or 
-    `distant` (pin in a round robin way between the clusters and packages). When
-    no pinning policy is specified, the `loose` policy is applied. Finally, 
-    `sync_buff_size` and `sync_waiting_type` are optional and may help to fine 
-    tune the synchronizations between the pipeline stages. The last stage should 
-    not contain `sync_buff_size` or `sync_waiting_type` fields. Using the `FILE` 
-    scheduler will override the following parameters: `-u` (or `--buffer-size`) 
-    and `-w` (or `--active-waiting`).
+    In the `schedule` field, each line corresponds to one pipeline stage: the
+    field `tasks` counts the number of consecutive tasks of the stage while the
+    field `threads` gives the number of threads of the stage. The
+    `pinning-policy` field is mandatory (`packed`, `guided`, `distant` or
+    `loose`). The `core<a>-<b>` syntax of the `node-list` field requires
+    `hwloc`; without `hwloc`, use the `PU<a>-<b>` syntax. The
+    `sync_buff_size` and `sync_waiting_type` fields are optional and must not
+    be given on the last stage. The `FILE` scheduler overrides the `-t`, `-u`
+    (or `--buffer-size`) and `-w` (or `--active-waiting`) parameters. The
+    profiling phase (`-l`) is still executed with this scheduler.
 
 Moreover, for each stage it is possible to specify the number of replications 
 (= number of threads that will execute the stage) with the `-t` 
@@ -182,34 +178,46 @@ Moreover, for each stage it is possible to specify the number of replications
 
 **Command Line Arguments**
 
-The following verbatim is a copy-paste from the `-h` stdout:
+The following verbatim is a copy-paste from the `-h` stdout (`StreamPU`
+compiled without `hwloc`):
 
 ```bash
-usage: spu-benchmark [options]
+usage: ./bin/spu-benchmark [options]
 
-  -t, --n-threads          Number of threads to run in parallel for each stage                         [empty]
-  -f, --n-inter-frames     Number of frames to process in one task                                     [1]
-  -s, --sleep-time         Sleep time duration in one task (microseconds)                              [5]
-  -d, --data-length        Size of data to process in one task (in bytes)                              [2048]
-  -e, --n-exec             Number of executions (0 means -> never stop because of this counter)        [0]
-  -l, --n-exec-pro         Number of executions during the scheduler profiling phase                   [100]
-  -u, --buffer-size        Size of the buffer between the different stages of the pipeline             [16]
-  -o, --dot-filepath       Path to dot output file                                                     [empty]
-  -i, --in-filepath        Path to the input file (used to generate bits of the chain)                 [empty]
-  -j, --out-filepath       Path to the output file (written at the end of the chain)                   ["file.out"]
-  -c, --copy-mode          Enable to copy data in sequence (performance will be reduced)               [false]
-  -b, --step-by-step       Enable step-by-step sequence execution (performance will be reduced)        [false]
-  -p, --print-stats        Enable to print per task statistics (performance will be reduced)           [false]
-  -g, --debug              Enable task debug mode (print socket data)                                  [false]
-  -q, --force-sequence     Force sequence instead of pipeline                                          [false]
-  -w, --active-waiting     Enable active waiting in the pipeline synchronizations                      [false]
-  -n, --tsk-per-sta        The number of tasks on each stage of the pipeline                           [empty]
-  -r, --tsk-types          The socket type of each task (SFWD or SIO)                                  [empty]
-  -R, --tsk-types-sta      The socket type of tasks on each stage (SFWD or SIO)                        [empty]
-  -C, --chain              Description of the tasks chain (to be combined with '-S' param)             [empty]
-  -S, --sched              Scheduler algorithm for the pipeline creation ('OTAC', 'FILE')              ["OTAC"]
-  -F, --sched-file         File that contains the scheduling, to combine with 'FILE' scheduler         ["sched.json"]
-  -P, --pinning-policy     Pinning policy for pipeline execution (only available if linked with hwloc) [empty]
-  -v, --verbose            Show information about the scheduling choices                               [false]
-  -h, --help               This help                                                                   [false]
+  -t, --n-threads          Number of threads to run in parallel for each stage                    [empty]
+  -f, --n-inter-frames     Number of frames to process in one task                                [1]
+  -s, --sleep-time         Sleep time duration in one task (microseconds)                         [5]
+  -d, --data-length        Size of data to process in one task (in bytes)                         [2048]
+  -e, --n-exec             Number of executions (0 means -> never stop because of this counter)   [0]
+  -l, --n-exec-pro         Number of executions during the scheduler profiling phase              [100]
+  -u, --buffer-size        Size of the buffer between the different stages of the pipeline        [16]
+  -o, --dot-filepath       Path to dot output file                                                [empty]
+  -i, --in-filepath        Path to the input file (used to generate bits of the chain)            [empty]
+  -j, --out-filepath       Path to the output file (written at the end of the chain)              ["file.out"]
+  -c, --copy-mode          Enable to copy data in sequence (performance will be reduced)          [false]
+  -b, --step-by-step       Enable step-by-step sequence execution (performance will be reduced)   [false]
+  -p, --print-stats        Enable to print per task statistics (performance will be reduced)      [false]
+  -g, --debug              Enable task debug mode (print socket data)                             [false]
+  -q, --force-sequence     Force sequence instead of pipeline                                     [false]
+  -w, --active-waiting     Enable active waiting in the pipeline synchronizations                 [false]
+  -n, --tsk-per-sta        The number of tasks on each stage of the pipeline                      [empty]
+  -r, --tsk-types          The socket type of each task (SFWD or SIO)                             [empty]
+  -R, --tsk-types-sta      The socket type of tasks on each stage (SFWD or SIO)                   [empty]
+  -C, --chain              Description of the tasks chain (to be combined with '-S' param)        [empty]
+  -S, --sched              Scheduler algorithm for the pipeline creation ('OTAC', 'GR' or 'FILE') ["OTAC"]
+  -F, --sched-file         File that contains the scheduling, to combine with 'FILE' scheduler    ["sched.json"]
+  -v, --verbose            Show information about the scheduling choices                          [false]
+  -k, --task-autoalloc     Enable task SOUT autoalloc mode                                        [false]
+  -h, --help               This help                                                              [false]
 ```
+
+When `StreamPU` is linked with `hwloc`, the help also contains the following
+line:
+
+```bash
+  -P, --pinning-policy     Pinning policy for pipeline execution                                  [empty]
+```
+
+When `-t` is not given, each stage is executed by one thread (with `-C`, the
+number of hardware threads of the machine is used as the number of
+resources).

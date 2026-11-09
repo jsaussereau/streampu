@@ -16,6 +16,17 @@ To do so, the runtime relies on the
     If `StreamPU` is not linked with the `hwloc` library, then the thread 
     pinning interface will have no effect and the threads will not be pinned.
 
+!!! important
+    The `hwloc` topology has to be loaded **before** creating the sequences or
+    pipelines that use thread pinning, and released at the end of the
+    application:
+    ```cpp
+    tools::Thread_pinning::init();    // load the hwloc topology
+    // ... create and execute the sequences/pipelines ...
+    tools::Thread_pinning::destroy(); // release the hwloc topology
+    ```
+    If `init()` has not been called, the pinning functions do nothing.
+
 !!! info
 	Thread pinning relies the OS. The later needs to expose appropriated system 
 	calls. While Linux and Windows provide these syscalls,	macOS does not... 
@@ -60,7 +71,29 @@ set.
 In `StreamPU`, thread pinning can be set in `runtime::Sequence` and 
 `runtime::Pipeline` class constructors. In both cases, there is a dedicated 
 argument of `std::string` type named `sequence_pinning_policy` for 
-`runtime::Sequence` or `pipeline_pinning_policy` for `runtime::Pipeline`.
+`runtime::Sequence` or `pipeline_pinning_policy` for `runtime::Pipeline`. The
+pinning also has to be enabled with the `thread_pinning` boolean argument (one
+boolean per stage for a pipeline):
+
+```cpp
+runtime::Sequence seq(first_task, 4 /* n_threads */, true /* thread_pinning */, "PU_0; PU_1; PU_2; PU_3");
+
+runtime::Pipeline pipeline(firsts, lasts, sep_stages,
+                           { 1, 4, 1 },           // number of threads per stage
+                           { 16, 16 },            // synchronization buffer sizes
+                           { false, false },      // active waiting
+                           { true, true, true },  // thread pinning per stage
+                           "PU_0 | PACKAGE_1; PACKAGE_1; PACKAGE_2; PACKAGE_2 | PACKAGE_0");
+```
+
+The policy can also be changed after the construction with
+`Sequence::set_thread_pinning(const bool, const std::string&)`.
+
+!!! note
+    An older interface is also available: instead of a policy string, a vector
+    of PU logical indexes (`puids`, one per thread) is given to the
+    constructor. Each thread is then pinned on a single PU
+    (`tools::Thread_pinning::pin(puid)`).
 
 !!! info
     For NUMA architectures, it is important to specify thread pinning at the 
@@ -76,21 +109,22 @@ with three different separators:
 - Replicated stage (= replicated sequence = one thread): `;`  
 - For one thread, the list of pinned `hwloc` objects (= logical or): `,`  
 
+The spaces are ignored. If a pipeline policy contains a single stage
+description (no `|`), it is applied to all the stages; if a stage description
+contains a single thread description (no `;`), it is applied to all the threads
+of the stage. Otherwise, the number of stages (resp. threads) of the policy
+must match the pipeline (resp. the stage).
+
 Then, the pinning policy can contains all the available `hwloc` objects. Below 
 is the correspondence between the `std::string` and the `hwloc` object types:
 
-```cpp
-std::map<std::string, hwloc_obj_type_t> str_to_hwloc_obj =
-{ 
-  /* global containers */             /* data caches */              /* instruction caches */
-  { "GROUP",   HWLOC_OBJ_GROUP    },  { "L5D", HWLOC_OBJ_L5CACHE },  { "L3I",  HWLOC_OBJ_L3ICACHE },
-  { "NUMA",    HWLOC_OBJ_NUMANODE },  { "L4D", HWLOC_OBJ_L4CACHE },  { "L2I",  HWLOC_OBJ_L2ICACHE },
-  { "PACKAGE", HWLOC_OBJ_PACKAGE  },  { "L3D", HWLOC_OBJ_L3CACHE },  { "L1I",  HWLOC_OBJ_L1ICACHE },
-                                      { "L2D", HWLOC_OBJ_L2CACHE },  /* compute units */
-                                      { "L1D", HWLOC_OBJ_L1CACHE },  { "CORE", HWLOC_OBJ_CORE     },
-                                                                     { "PU",   HWLOC_OBJ_PU       },
-};           
-```
+| String    | `hwloc` object type  | String | `hwloc` object type | String | `hwloc` object type  |
+| --------- | -------------------- | ------ | ------------------- | ------ | -------------------- |
+| `MACHINE` | `HWLOC_OBJ_MACHINE`  | `L1D`  | `HWLOC_OBJ_L1CACHE` | `L1I`  | `HWLOC_OBJ_L1ICACHE` |
+| `GROUP`   | `HWLOC_OBJ_GROUP`    | `L2D`  | `HWLOC_OBJ_L2CACHE` | `L2I`  | `HWLOC_OBJ_L2ICACHE` |
+| `NUMA`    | `HWLOC_OBJ_NUMANODE` | `L3D`  | `HWLOC_OBJ_L3CACHE` | `L3I`  | `HWLOC_OBJ_L3ICACHE` |
+| `PACKAGE` | `HWLOC_OBJ_PACKAGE`  | `L4D`  | `HWLOC_OBJ_L4CACHE` | `CORE` | `HWLOC_OBJ_CORE`     |
+|           |                      | `L5D`  | `HWLOC_OBJ_L5CACHE` | `PU`   | `HWLOC_OBJ_PU`       |
 
 To specify the index `X` of an `hwloc` object, the following syntax is used: 
 `OBJECT_X` (ex: `PU_5` refers to the logical PU n°5).
@@ -207,11 +241,24 @@ Here are the corresponding parameters:
 
 In this case, the OS will be in charge of pinning the thread of the first stage.
   
-### Unpin
+## The `Thread_pinning` Class
 
-An **unpin** function exists and can be called by each thread individually. Once 
-the `unpin` function is triggered the thread will be free to be scheduled by the 
-OS over all the process units.
+The `tools::Thread_pinning` class (static methods only) is used by the
+sequences and pipelines, and can also be used directly to pin any thread:
+
+| Method | Description |
+| ------ | ----------- |
+| `static void init()` | Loads the `hwloc` topology (to call once, before any pinning). |
+| `static void destroy()` | Releases the `hwloc` topology. |
+| `static bool is_init()` | `true` if `init()` has been called. |
+| `static void pin(const size_t puid)` | Pins the calling thread on the PU of logical index `puid`. |
+| `static void pin(const std::string hwloc_objects)` | Pins the calling thread on a list of `hwloc` objects (ex: `"PU_0, CORE_3"`). |
+| `static void unpin()` | Unpins the calling thread: the OS can schedule it on all the PUs. |
+| `static std::string get_cur_cpuset_str()` | The current cpuset of the calling thread. |
+| `static void set_logs(const bool)`, `static bool is_logs()` | Enables logs on the pinning operations. |
+
+The threads of the sequences and pipelines are pinned at the beginning of
+`exec()` and unpinned at the end.
 
 !!! warning
     We assume that the user is aware of the computer architecture, uses the 

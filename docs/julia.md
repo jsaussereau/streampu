@@ -15,8 +15,8 @@ inter-frame batching, multi-threaded `Sequence` replication, and multi-stage
     cmake -S . -B build -DSPU_LINK_JULIA=ON
     ```
     Multi-threaded execution requires Julia's `jl_adopt_thread` C API feature
-    (introduced in Julia 1.9). `StreamPU` has been tested from **Julia 1.10 to
-    Julia 1.13**.
+    (introduced in Julia 1.9); the CMake configuration requires **Julia 1.10.9
+    or newer**. `StreamPU` has been tested from **Julia 1.10 to Julia 1.13**.
 
 ---
 
@@ -141,12 +141,16 @@ filter.create_codelet(t, R""""(
   module's state instances.
 - **Cloning semantics (`shared = false` vs. `shared = true`)**:
     - `shared = false` *(default)*: When `Sequence` or `Pipeline` clones the
-      module across worker threads, each clone receives an independent
-      `Base.deepcopy` of the Julia state, guaranteeing lock-free thread safety for
-      mutable workspaces.
-    - `shared = true`: Clones keep a shallow reference to the exact same Julia
-      object in memory, avoiding redundant duplication of large immutable data
-      structures (e.g., great for constants).
+      module across worker threads, the `julia_constructor` expression is
+      evaluated again for each clone, so that each clone owns an independent
+      Julia state instance (no lock is needed for mutable workspaces). Note
+      that the constructor is re-evaluated, not deep-copied: a state modified
+      before the replication is not propagated to the clones.
+    - `shared = true`: Clones keep a reference to the exact same Julia object
+      in memory (the constructor is evaluated once), avoiding redundant
+      duplication of large immutable data structures (e.g., great for
+      constants). The user is responsible for the thread safety of a shared
+      mutable state.
 
 ---
 
@@ -313,8 +317,8 @@ support `-J` (`--jl-safe`) to test safe exception wrapping and `-E`
 ### Stateful Chain
 
 This test (`tests/julia/stateful_chain_julia.cpp`) validates persistent state
-management, multi-task state sharing, and independent `Base.deepcopy` state
-cloning across threads in `spu::module::Stateful_Julia`.
+management, multi-task state sharing, and independent per-clone state
+instantiation across threads in `spu::module::Stateful_Julia`.
 
 <figure markdown>
   ![Stateful Julia sequence](./assets/test_stateful_chain_julia.svg){ width="1000" }

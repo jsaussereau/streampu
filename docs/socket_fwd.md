@@ -5,9 +5,10 @@
 The forward socket is a new feature added to `StreamPU` to improve the
 performance and the flexibility in some applications. As mentioned in the 
 [Socket](socket.md) section, the `SFWD` works as an input and output at the same 
-time. It receives its `dataptr` from the input bound socket and this same 
-pointer is sent to all the output bound sockets, which means that all the 
-consecutive tasks bound by `SFWD` share the same memory space.
+time. It receives its `dataptr` from the socket it is bound to (like an input
+socket) and this same pointer is sent to all the sockets bound to it (like an
+output socket), which means that all the consecutive tasks bound by `SFWD`
+share the same memory space.
 
 ```mermaid
 graph LR;
@@ -24,7 +25,7 @@ straightforward because it behaves the same way as the input and output sockets.
 We just had to distinguish when it is used as an input and when it is used as an 
 output. However, **the most challenging part was to combine forward socket with 
 the [pipeline](pipeline.md)**. Especially when forward sockets are bound from 
-one stage to an other.
+one stage to another.
 
 ### Forward Sockets and Pipelines
 
@@ -49,7 +50,7 @@ Moreover, when multiple forward sockets are crossing [pipeline](pipeline.md)
 stages, we need to check if these forward sockets are pointing to a same 
 `dataptr` or to different `dataptr`s. In the case where multiple forward sockets 
 are crossing [pipeline](pipeline.md) stages and are pointing to the same 
-`dataptr`, only one buffer need to be created in the 
+`dataptr`, only one buffer needs to be created in the 
 [adaptors](pipeline.md#Adaptor). To detect this, a map to record the previous 
 `dataptr` is used (see the `fwd_source` variable in the code).
 
@@ -68,8 +69,8 @@ the forward socket implementation.
     ```bash
     test-pipeline-double-chain -t 3
     ```  
-    The purpose of this graph is to test the buffer exchange with `SIO` and
-    `SFWD`, both on the same stage.
+    The purpose of this graph is to test the buffer exchange with `SIO`
+    (`SIN`/`SOUT` pairs) and `SFWD`, both on the same stage.
 
 === "Pipeline with distant stage binding (only SFWD)" 
     <figure markdown>

@@ -1,8 +1,8 @@
 *[AFF3CT]: A Fast Forward Error Correction Toolbox!
 *[API]: Application Programming Interface
 *[ARM]: Advanced RISC (Reduced Instruction Set Computer) Machine
-*[ARMv7]: Advanced RISC (Reduced Instruction Set Computer) Machine Vesion 7
-*[ARMv8]: Advanced RISC (Reduced Instruction Set Computer) Machine Vesion 8
+*[ARMv7]: Advanced RISC (Reduced Instruction Set Computer) Machine Version 7
+*[ARMv8]: Advanced RISC (Reduced Instruction Set Computer) Machine Version 8
 *[ASCII]: American Standard Code for Information Interchange
 *[AVX]: Advanced Vector Extensions
 *[AVX2]: Advanced Vector Extensions 2
@@ -15,7 +15,7 @@
 *[CISC]: Complex Instruction Set Computer
 *[CLI]: Command Line Interface
 *[codec]: coder/decoder
-*[codecs]: coders/decodes
+*[codecs]: coders/decoders
 *[CPU]: Central Process Unit
 *[CPUs]: Central Process Units
 *[CRC]: Cyclic Redundancy Check

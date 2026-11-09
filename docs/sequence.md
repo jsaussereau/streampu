@@ -12,8 +12,9 @@ a fixed "sequence" of tasks.
 </figure>
 
 A sequence is a C++ object of the `spu::runtime::Sequence` class. The 
-following sections try to give an overview of the most important attributes and 
-methods to facilitate the code understanding.
+following sections give an overview of the most important attributes and 
+methods to facilitate the code understanding. The user point of view is
+described in [Sequences](sequence_usage.md).
 
 ## Main Attributes 
 
@@ -25,7 +26,7 @@ The number of threads that are executing the sequence.
 ```cpp
 std::vector<tools::Digraph_node<runtime::Sub_sequence>*> sequences;
 ```
-Vector of [sub-sequences](#Sub-sequence) of the main sequence (one per thread).
+Root node of the graph of [sub-sequences](#Sub-sequence), one per thread.
 
 ```cpp
 std::vector<size_t>                      firsts_tasks_id;
@@ -33,28 +34,62 @@ std::vector<size_t>                      lasts_tasks_id;
 std::vector<std::vector<runtime::Task*>> firsts_tasks;
 std::vector<std::vector<runtime::Task*>> lasts_tasks;
 ```
-Vectors used to get the firsts and lasts tasks of the sequence. The first tasks
-are the ones without parents, and  the last are the ones without children in the
-constructed [directed graph](#Digraph).
+Vectors used to get the firsts and lasts tasks of the sequence (per thread).
+The first tasks are the ones given to the constructor, and the last tasks are
+the ones whose outputs are not followed during the exploration (the tasks given
+as `lasts` and the tasks without bound successors in the sequence).
 
 ```cpp
 std::vector<std::vector<module::Module*>> all_modules;
+std::vector<std::vector<std::shared_ptr<module::Module>>> modules;
 ```
-Vector of [modules](module.md) contained within the sequence.
+[Modules](module.md) contained within the sequence, per thread. `all_modules`
+contains pointers to all the modules (`all_modules[0]` contains the original
+modules when `tasks_inplace` is `true`), while `modules` owns the clones created
+for the replication.
+
+```cpp
+std::shared_ptr<tools::Thread_pool> thread_pool;
+```
+The pool of `n_threads - 1` threads used by `exec()` (the calling thread
+executes the replica 0).
+
+```cpp
+bool tasks_inplace;
+bool no_copy_mode;
+bool auto_stop;
+bool memory_allocation;
+```
+The options of the sequence (see [Sequences](sequence_usage.md)).
+
+```cpp
+std::vector<tools::Interface_is_done*> donners;
+std::vector<std::vector<tools::Interface_reset*>> switchers_reset;
+```
+The modules that can stop the execution (auto-stop mode) and the switchers
+that are reset before each execution of the sequence.
 
 ## Main Methods
 
 ```cpp
 void exec();
+void exec(std::function<bool()> stop_condition);
+void exec(std::function<bool(const std::vector<const int*>&)> stop_condition);
 ```
-This is the public method that runs the sequence in loop. Other variants exist
-where it is possible to give a stop condition function.
+The public methods that run the sequence in loop (see
+[Executing a Sequence](sequence_usage.md#executing-a-sequence)). Each thread
+calls `_exec()` (or `_exec_without_statuses()`), which recursively executes the
+*processes* of the sub-sequences, following the path returned by the `commute`
+tasks.
 
 ```cpp
 void gen_processes(const bool no_copy_mode = false);
 ```
 This function is one of the most important of the sequence class, it is called
-by the `Sequence` constructor. Its main purpose is to parse the sub-sequence 
+by the `Sequence` constructor, and by `exec()` with `no_copy_mode = true` when
+the [no-copy mode](sequence_usage.md#no-copy-mode) is enabled (it is called
+again with `false` at the end of `exec()` to restore the initial data
+pointers). Its main purpose is to parse the sub-sequence 
 graph and to perform some operations that can modify the user bindings. 
 Additionally, some tasks can be optimized and/or interpreted as a DSEL keyword. 
 
@@ -136,6 +171,11 @@ section.
 ### Main Attributes
 
 ```cpp
+std::vector<runtime::Task*> tasks;
+```
+The tasks of the sub-sequence, in execution order.
+
+```cpp
 runtime::subseq_t type;
 ```
 The sub-sequence types can be: `STD`, `COMMUTE` and `SELECT`. This type is used 
@@ -163,8 +203,8 @@ The sub-sequence's id.
 std::vector<std::vector<std::vector<runtime::Socket*>>> rebind_sockets;
 std::vector<std::vector<std::vector<void*>>> rebind_dataptrs;
 ```
-This two vectors are used within the `gen_process()` method to save the sockets
-and their `dataptr` to update during the runtime rebinding.
+These two vectors are used within the `gen_processes()` method to save the
+sockets and their `dataptr` to update during the runtime rebinding.
 
 <a name="Digraph"></a>
 ## Digraph Node
